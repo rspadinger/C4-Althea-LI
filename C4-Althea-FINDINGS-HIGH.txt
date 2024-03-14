@@ -1,0 +1,319 @@
+ 
+# M01 - LiquidInfrastructureERC20::distribute : DoS and/or out of gas exception - blacklisted address may block token distribution for all other recipients  
+
+## Risk: Medium
+
+## Issue Type:
+
+## Title: LiquidInfrastructureERC20::distribute : DoS and/or out of gas exception - blacklisted address may block token distribution for all other recipients   
+
+##Links: https://github.com/code-423n4/2024-02-althea-liquid-infrastructure/blob/bd6ee47162368e1999a0a5b8b17b701347cf9a7d/liquid-infrastructure/contracts/LiquidInfrastructureERC20.sol#L224
+
+## Impact
+
+An attacker may acquire a blacklisted address for one of the distributableERC20s (for exmple: USDC) and block the the distribution of those tokens for all other recipients.
+
+**The following scenario describes how this could happen:**
+
+* The attacker acquires an address that is blacklisted for one of the eligible distributableERC20 tokens - for example for USDC. 
+
+* The protocol admin is not aware that the attacker holds an address that is blacklisted for one of the tokens in the distributableERC20 array and approves the attacker by calling the approveHolder() function once the attacker passes KYC and all other necessary steps.
+
+* The attacker takes the necessary steps to acquire LiquidInfrastructureERC20 tokens - for example, by buying them on an exchange, via Althea L1...
+
+* When those tokens are transferred to the attacker, the _beforeTokenTransfer() function is executed, the attacker is added to the holders array and receives  LiquidInfrastructureERC20 tokens (assuming there is no distribution in progress).
+
+* When the next distribution takes place, the distribute() function iterates over all recipients in te holders array and performs a transfer for each token listed in the distributableERC20s array. 
+
+* When the token for which the attacker holds a blacklisted address (for example USDC) is transferred, the transfer fails and the distribute() function reverts and therefore prevents any of the recipients from receiving any of the tokens in the distributableERC20s array. 
+
+
+Also, the function contains an unbounded loop and once the holders array reaches a certain size, an out of gas exception will be generated and the function call will revert.
+    
+
+## Proof of Concept
+
+Add the following contract (TestERC20Blacklist.sol) to the contracts folder:
+
+```
+//SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.12;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract TestERC20Blacklist is ERC20 {
+    constructor() ERC20("USDC With Blacklist", "USDC") {
+        _mint(address(msg.sender), 100000000000000000000000000);
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal override {
+        //holder1: 0x2fFd013AaA7B5a7DA93336C2251075202b33FB2B ; holder2: 0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39
+        //simulate revert for blacklisted holder2 address: 0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39
+        require(to != 0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39, "this address is blacklisted");
+        super._transfer(from, to, amount);
+    }
+}
+```
+
+Add the following function and test to the liquidERC20.ts file:
+
+```
+async function distributionFailureBlacklistedAddress(
+    infraERC20: LiquidInfrastructureERC20,
+    infraERC20Owner: HardhatEthersSigner,
+    holders: HardhatEthersSigner[],
+    nftOwners: HardhatEthersSigner[],
+    nfts: LiquidInfrastructureNFT[],
+    rewardErc20s: ERC20[]
+) {
+    const [holder1, holder2] = holders.slice(0, 2)
+    const [nftOwner1] = nftOwners.slice(0, 1)
+    let [nft1] = nfts.slice(0, 1)
+    const [erc20Blacklist] = rewardErc20s.slice(0, 1)
+    //const erc20Addresses = [await erc20Blacklist.getAddress()]
+
+    // Register one NFT as a source of reward erc20s
+    await transferNftToErc20AndManage(infraERC20, nft1, nftOwner1)
+    await mine(1)
+    nft1 = nft1.connect(infraERC20Owner)
+
+    // Allocate some rewards to the NFT
+    const rewardAmount1 = 1000000
+    await erc20Blacklist.transfer(await nft1.getAddress(), rewardAmount1)
+    expect(await erc20Blacklist.balanceOf(await nft1.getAddress())).to.equal(rewardAmount1)
+
+    // And then send the rewards to the ERC20
+    await expect(infraERC20.withdrawFromAllManagedNFTs())
+        .to.emit(infraERC20, "WithdrawalStarted")
+        .and.emit(nft1, "SuccessfulWithdrawal")
+        .and.emit(erc20Blacklist, "Transfer")
+        .withArgs(await nft1.getAddress(), await infraERC20.getAddress(), rewardAmount1)
+        .and.emit(infraERC20, "Withdrawal")
+        .withArgs(await nft1.getAddress())
+        .and.emit(infraERC20, "WithdrawalFinished")
+
+    // Grant two holder some of the Infra ERC20 tokens and then distribute all rewards to them
+    await expect(infraERC20.mint(holder1.address, 100)).to.emit(infraERC20, "Transfer").withArgs(ZERO_ADDRESS, holder1.address, 100)
+    await expect(infraERC20.mint(holder2.address, 100)).to.emit(infraERC20, "Transfer").withArgs(ZERO_ADDRESS, holder2.address, 100)
+
+    await mine(500)
+    //the distribution will revert - none of the recipients will receive any tokens
+    await expect(infraERC20.distributeToAllHolders()).to.be.revertedWith("this address is blacklisted")
+
+    expect(await erc20Blacklist.balanceOf(holder1.address)).to.equal(0)
+    expect(await erc20Blacklist.balanceOf(holder2.address)).to.equal(0)
+
+    console.log("erc20Blacklist balance for Holder1: ", await erc20Blacklist.balanceOf(holder1.address)) //0
+    console.log("erc20Blacklist balance for Holder2: ", await erc20Blacklist.balanceOf(holder2.address)) //0
+}
+
+
+it("transfer reverts on blacklist address", async function () {
+    const { erc20Owner, nftAccount1, holder1, holder2 } = await liquidErc20Fixture()
+
+    const testERC20Blacklist = (await ethers.deployContract("TestERC20Blacklist", erc20Owner)) as unknown as TestERC20Blacklist
+    const infraERC20 = await deployLiquidERC20(erc20Owner, "Infra", "INFRA", [], [], 500, [await testERC20Blacklist.getAddress()])
+
+    const holders = [holder1, holder2]
+    for (let holder of holders) {
+        const address = holder.address
+        await expect(infraERC20.approveHolder(address)).to.not.be.reverted
+    }
+
+    const nftOwners = [nftAccount1]
+    let nfts: LiquidInfrastructureNFT[] = [await deployLiquidNFT(nftAccount1)]
+    const erc20s: ERC20[] = [testERC20Blacklist]
+
+    for (const nft of nfts) {
+        nft.setThresholds(
+            erc20s,
+            erc20s.map(() => 0)
+        )
+    }
+    await distributionFailureBlacklistedAddress(infraERC20, erc20Owner, holders, nftOwners, nfts, erc20s)
+}) 
+```
+
+
+## Tools Used
+
+Manual Review
+
+## Recommended Mitigation Steps
+ 
+Instead of transferring distributableERC20s in a loop to each recipient, maintain a state variable that tracks the amount each recipient is entitled to for each of the distributableERC20s. Add a withdrawal function to the contract that allows each recipient to withdraw the tokens he/she is entitled to. If one participant is blacklisted, it won't hinder others from retrieving their tokens.
+
+That way, the out of gas exception due to the unbounded loop can also be prevented. If it is not possible to use a mapping for certain data structures (like the holders array) and if there is no way to restrict the size of the array to a specific limit, the iteration of such an array needs to be batched over several transactions depending on the result of a call to the Solidity gasleft() function.
+
+**Something like the following could be used:**
+
+```
+...
+while (i < holders.length && gasleft() > MIN_GAS_AMOUNT) {
+    address _holder = holders[i];
+    ...
+    try toDistribute.transfer(recipient, entitlement) {
+        receipts[j] = entitlement;
+    } catch {
+        //emit an event...
+    }
+    ...
+    i++;
+}
+
+...
+
+nextHolderIndex = i;
+if (i == holders.length - 1) {
+    continueDistribution = false;
+    nextHolderIndex = 0;
+}
+...
+```
+
+The transfer to a blacklisted address of course would still fail and cause the transaction to revert => this can be prevented by wrapping the transfer call in a try/catch block and by logging an event.
+
+
+# M02 - LiquidInfrastructureERC20::_beginDistribution : precission loss vulnerability - potential loss of entitlement for holders
+
+## Risk: Medium
+
+## Issue Type:
+
+## Title: LiquidInfrastructureERC20::_beginDistribution : precission loss vulnerability - potential loss of entitlement for holders  
+
+## Links: https://github.com/code-423n4/2024-02-althea-liquid-infrastructure/blob/bd6ee47162368e1999a0a5b8b17b701347cf9a7d/liquid-infrastructure/contracts/LiquidInfrastructureERC20.sol#L275
+
+## Impact
+
+In LiquidInfrastructureERC20::_beginDistribution, the following formula is used to calculate the entitlements for holders: 
+
+```
+uint256 entitlement = balance / supply;
+```
+
+This poses the risk of a precission loss vulnerability and consequentially can lead to a loss of entitlements for holders. 
+
+**Let's take a look at the following scenario:**
+
+* There are two approved holders and each of them holds 1000 LiquidInfrastructureERC20 tokens
+* There is 1 distributableERC20s - let's call it T1 and 2000 tokens are transferred to our LiquidInfrastructureERC20 contract 
+* Someone calls the distributeToAllHolders() function and the entitlement is calculated in _beginDistribution() as: entitlement per unit = balance / supply = 2000 / 2000 = 1
+* The distribution amount for each holder is calculated in the distribute() function as: entitlement per user = erc20EntitlementPerUnit[j] * this.balanceOf(recipient) = 1 * 1000 = 1000 tokens
+
+So, as expected, each users receives 1000 tokens. Now let's look at the exact same example, but instead of distributing 2000 distributableERC20s tokens, we only distribute 1999 token. Now, we would expect that each user should receive at least 999 tokens. But, because of the wrong formula mentioned above, none of the two holders receives any tokens.
+
+**Here is the calculation:**  
+
+* entitlement per unit = balance / supply = 1999 / 2000 = 0.999 = 0 in Solidity
+* entitlement per user = erc20EntitlementPerUnit[j] * this.balanceOf(recipient) = 0 * 1000 = 0 tokens
+
+
+Now, if holder1 sells his LiquidInfrastructureERC20 tokens and one hour later, 1 single distributableERC20s would be transferred to the contract (total balance would now be 2000 tokens), holder2 would receive all reward tokens and holder1 would have gotten none although he may have held his tokens for several months. 
+
+
+## Proof of Concept
+
+Add the following function and test to the liquidERC20.ts file:
+
+```
+async function distributionTo2Users(
+    infraERC20: LiquidInfrastructureERC20,
+    infraERC20Owner: HardhatEthersSigner,
+    holders: HardhatEthersSigner[],
+    nftOwners: HardhatEthersSigner[],
+    nfts: LiquidInfrastructureNFT[],
+    rewardErc20s: ERC20[]
+) {
+    const [holder1, holder2] = holders.slice(0, 2)
+    const [nftOwner1] = nftOwners.slice(0, 1)
+    let [nft1] = nfts.slice(0, 1)
+    const [testERC20A] = rewardErc20s.slice(0, 1)
+
+    // Register one NFT as a source of reward erc20s
+    await transferNftToErc20AndManage(infraERC20, nft1, nftOwner1)
+    await mine(1)
+    nft1 = nft1.connect(infraERC20Owner)
+
+    // Allocate some rewards to the NFT
+    const rewardAmount1 = 1999n * 10n ** 18n //2000 reward tokens for 2 users
+    await testERC20A.transfer(await nft1.getAddress(), rewardAmount1)
+    expect(await testERC20A.balanceOf(await nft1.getAddress())).to.equal(rewardAmount1)
+
+    // And then send the rewards to the ERC20
+    await infraERC20.withdrawFromAllManagedNFTs()
+
+    // Grant two holder some of the Infra ERC20 tokens and then distribute all rewards to them
+    await infraERC20.mint(holder1.address, 1000n * 10n ** 18n)
+    await infraERC20.mint(holder2.address, 1000n * 10n ** 18n)
+
+    await mine(500)
+    await infraERC20.distributeToAllHolders()
+
+    //each user should receive 999.5 reward tokens => this fails!
+    expect(await testERC20A.balanceOf(holder1.address)).to.equal(9995n * 10n ** 17n)
+    expect(await testERC20A.balanceOf(holder2.address)).to.equal(9995n * 10n ** 17n)
+
+    console.log("testERC20A balance for Holder1: ", await testERC20A.balanceOf(holder1.address)) // 0, but should be 9995n * 10n ** 17n
+    console.log("testERC20A balance for Holder2: ", await testERC20A.balanceOf(holder2.address)) // 0, but should be 9995n * 10n ** 17n
+}
+
+
+it("shows the failure of reward distributions due to precission loss", async function () {
+    const { testERC20A, erc20Owner, nftAccount1, holder1, holder2 } = await liquidErc20Fixture()
+
+    const infraERC20 = await deployLiquidERC20(erc20Owner, "Infra", "INFRA", [], [], 500, [await testERC20A.getAddress()])
+
+    const holders = [holder1, holder2]
+    for (let holder of holders) {
+        const address = holder.address
+        await expect(infraERC20.approveHolder(address)).to.not.be.reverted
+    }
+
+    const nftOwners = [nftAccount1]
+    let nfts: LiquidInfrastructureNFT[] = [await deployLiquidNFT(nftAccount1)]
+    const erc20s: ERC20[] = [testERC20A]
+
+    for (const nft of nfts) {
+        nft.setThresholds(
+            erc20s,
+            erc20s.map(() => 0)
+        )
+    }
+    await distributionTo2Users(infraERC20, erc20Owner, holders, nftOwners, nfts, erc20s)
+})
+```
+
+
+## Tools Used
+
+Manual Review
+
+## Recommended Mitigation Steps
+
+To correct the issue, the balance in the _beginDistribution() function needs to be multiplied with a factor to adjust the precision.
+
+Add the following constant to the contract:
+
+```
+uint256 private constant PRECISION_FACTOR = 10 ** 8;
+```
+ 
+In in the _beginDistribution() function, make the following modification:
+
+```diff
+- uint256 entitlement = balance / supply;
++ uint256 entitlement = (balance * PRECISION_FACTOR) / supply;
+```
+
+In in the distribute() function, make the following modification:
+
+```diff
+- uint256 entitlement = erc20EntitlementPerUnit[j] * this.balanceOf(recipient);
++ uint256 entitlement = (erc20EntitlementPerUnit[j] * this.balanceOf(recipient)) / PRECISION_FACTOR;
+```
+
+

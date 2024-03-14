@@ -1,0 +1,156 @@
+digraph G {
+  graph [ ratio = "auto", page = "100", compound =true, bgcolor = "#2e3e56" ];
+  node [ style = "filled", fillcolor = "#edad56", color = "#edad56", penwidth =3 ];
+  edge [ color = "#fcfcfc", penwidth =2, fontname = "helvetica Neue Ultra Light" ];
+subgraph "clusterLiquidInfrastructureERC20" {
+  graph [ label = "LiquidInfrastructureERC20", color = "#445773", fontcolor = "#f0f0f0", style = "rounded", bgcolor = "#445773" ];
+  "LiquidInfrastructureERC20.isApprovedHolder" [ label = "isApprovedHolder" ];
+  "LiquidInfrastructureERC20.approveHolder" [ label = "approveHolder", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.disapproveHolder" [ label = "disapproveHolder", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20._beforeTokenTransfer" [ label = "_beforeTokenTransfer", color = "#f2c383", fillcolor = "#f2c383" ];
+  "LiquidInfrastructureERC20._beforeMintOrBurn" [ label = "_beforeMintOrBurn" ];
+  "LiquidInfrastructureERC20._afterTokenTransfer" [ label = "_afterTokenTransfer", color = "#f2c383", fillcolor = "#f2c383" ];
+  "LiquidInfrastructureERC20.distributeToAllHolders" [ label = "distributeToAllHolders", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.distribute" [ label = "distribute" ];
+  "LiquidInfrastructureERC20._isPastMinDistributionPeriod" [ label = "_isPastMinDistributionPeriod" ];
+  "LiquidInfrastructureERC20._beginDistribution" [ label = "_beginDistribution" ];
+  "LiquidInfrastructureERC20._endDistribution" [ label = "_endDistribution" ];
+  "LiquidInfrastructureERC20.mintAndDistribute" [ label = "mintAndDistribute", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.mint" [ label = "mint" ];
+  "LiquidInfrastructureERC20.burnAndDistribute" [ label = "burnAndDistribute", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.burnFromAndDistribute" [ label = "burnFromAndDistribute", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.withdrawFromAllManagedNFTs" [ label = "withdrawFromAllManagedNFTs", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.withdrawFromManagedNFTs" [ label = "withdrawFromManagedNFTs" ];
+  "LiquidInfrastructureERC20.addManagedNFT" [ label = "addManagedNFT", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.releaseManagedNFT" [ label = "releaseManagedNFT", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.setDistributableERC20s" [ label = "setDistributableERC20s", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.<Constructor>" [ label = "<Constructor>", color = "#FF9797", fillcolor = "#FF9797" ];
+  "LiquidInfrastructureERC20.balanceOf" [ label = "balanceOf" ];
+  "LiquidInfrastructureERC20.IERC20" [ label = "IERC20" ];
+  "LiquidInfrastructureERC20.totalSupply" [ label = "totalSupply" ];
+  "LiquidInfrastructureERC20._mint" [ label = "_mint" ];
+  "LiquidInfrastructureERC20.burn" [ label = "burn" ];
+  "LiquidInfrastructureERC20.burnFrom" [ label = "burnFrom" ];
+  "LiquidInfrastructureERC20.LiquidInfrastructureNFT" [ label = "LiquidInfrastructureNFT" ];
+}
+
+subgraph "clusterMath" {
+  graph [ label = "Math", color = "#e8726d", fontcolor = "#f0f0f0", style = "rounded,dashed", bgcolor = "#3b4b63" ];
+  "Math.min" [ label = "min" ];
+}
+
+subgraph "clusterIERC20" {
+  graph [ label = "IERC20", color = "#e8726d", fontcolor = "#f0f0f0", style = "rounded,dashed", bgcolor = "#3b4b63" ];
+  "IERC20.transfer" [ label = "transfer" ];
+}
+
+subgraph "clusterLiquidInfrastructureNFT" {
+  graph [ label = "LiquidInfrastructureNFT", color = "#e8726d", fontcolor = "#f0f0f0", style = "rounded,dashed", bgcolor = "#3b4b63" ];
+  "LiquidInfrastructureNFT.getThresholds" [ label = "getThresholds" ];
+  "LiquidInfrastructureNFT.withdrawBalancesTo" [ label = "withdrawBalancesTo" ];
+  "LiquidInfrastructureNFT.ownerOf" [ label = "ownerOf" ];
+  "LiquidInfrastructureNFT.AccountId" [ label = "AccountId" ];
+  "LiquidInfrastructureNFT.transferFrom" [ label = "transferFrom" ];
+}
+
+  "LiquidInfrastructureERC20.approveHolder";
+  "LiquidInfrastructureERC20.isApprovedHolder";
+  "LiquidInfrastructureERC20.disapproveHolder";
+  "LiquidInfrastructureERC20._beforeTokenTransfer";
+  "LiquidInfrastructureERC20._beforeMintOrBurn";
+  "LiquidInfrastructureERC20.balanceOf";
+  "LiquidInfrastructureERC20._isPastMinDistributionPeriod";
+  "LiquidInfrastructureERC20._afterTokenTransfer";
+  "LiquidInfrastructureERC20.distributeToAllHolders";
+  "LiquidInfrastructureERC20.distribute";
+  "LiquidInfrastructureERC20._beginDistribution";
+  "Math.min";
+  "LiquidInfrastructureERC20.IERC20";
+  "IERC20.transfer";
+  "LiquidInfrastructureERC20._endDistribution";
+  "LiquidInfrastructureERC20.totalSupply";
+  "LiquidInfrastructureERC20.mintAndDistribute";
+  "LiquidInfrastructureERC20.mint";
+  "LiquidInfrastructureERC20._mint";
+  "LiquidInfrastructureERC20.burnAndDistribute";
+  "LiquidInfrastructureERC20.burn";
+  "LiquidInfrastructureERC20.burnFromAndDistribute";
+  "LiquidInfrastructureERC20.burnFrom";
+  "LiquidInfrastructureERC20.withdrawFromAllManagedNFTs";
+  "LiquidInfrastructureERC20.withdrawFromManagedNFTs";
+  "LiquidInfrastructureERC20.LiquidInfrastructureNFT";
+  "LiquidInfrastructureNFT.getThresholds";
+  "LiquidInfrastructureNFT.withdrawBalancesTo";
+  "LiquidInfrastructureERC20.addManagedNFT";
+  "LiquidInfrastructureNFT.ownerOf";
+  "LiquidInfrastructureNFT.AccountId";
+  "LiquidInfrastructureERC20.releaseManagedNFT";
+  "LiquidInfrastructureNFT.transferFrom";
+  "LiquidInfrastructureERC20.approveHolder" -> "LiquidInfrastructureERC20.isApprovedHolder" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.disapproveHolder" -> "LiquidInfrastructureERC20.isApprovedHolder" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20._beforeTokenTransfer" -> "LiquidInfrastructureERC20.isApprovedHolder" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20._beforeTokenTransfer" -> "LiquidInfrastructureERC20._beforeMintOrBurn" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20._beforeTokenTransfer" -> "LiquidInfrastructureERC20.balanceOf" [ color = "#80e097" ];
+  "LiquidInfrastructureERC20._beforeMintOrBurn" -> "LiquidInfrastructureERC20._isPastMinDistributionPeriod" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20._afterTokenTransfer" -> "LiquidInfrastructureERC20.balanceOf" [ color = "#80e097" ];
+  "LiquidInfrastructureERC20.distributeToAllHolders" -> "LiquidInfrastructureERC20.distribute" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.distribute" -> "LiquidInfrastructureERC20._isPastMinDistributionPeriod" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.distribute" -> "LiquidInfrastructureERC20._beginDistribution" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.distribute" -> "Math.min" [ color = "white" ];
+  "LiquidInfrastructureERC20.distribute" -> "LiquidInfrastructureERC20.isApprovedHolder" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.distribute" -> "LiquidInfrastructureERC20.IERC20" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.distribute" -> "LiquidInfrastructureERC20.balanceOf" [ color = "#80e097" ];
+  "LiquidInfrastructureERC20.distribute" -> "IERC20.transfer" [ color = "white" ];
+  "LiquidInfrastructureERC20.distribute" -> "LiquidInfrastructureERC20._endDistribution" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20._isPastMinDistributionPeriod" -> "LiquidInfrastructureERC20.totalSupply" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20._beginDistribution" -> "LiquidInfrastructureERC20.totalSupply" [ color = "#80e097" ];
+  "LiquidInfrastructureERC20._beginDistribution" -> "LiquidInfrastructureERC20.IERC20" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.mintAndDistribute" -> "LiquidInfrastructureERC20._isPastMinDistributionPeriod" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.mintAndDistribute" -> "LiquidInfrastructureERC20.distributeToAllHolders" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.mintAndDistribute" -> "LiquidInfrastructureERC20.mint" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.mint" -> "LiquidInfrastructureERC20._mint" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.burnAndDistribute" -> "LiquidInfrastructureERC20._isPastMinDistributionPeriod" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.burnAndDistribute" -> "LiquidInfrastructureERC20.distributeToAllHolders" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.burnAndDistribute" -> "LiquidInfrastructureERC20.burn" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.burnFromAndDistribute" -> "LiquidInfrastructureERC20._isPastMinDistributionPeriod" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.burnFromAndDistribute" -> "LiquidInfrastructureERC20.distributeToAllHolders" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.burnFromAndDistribute" -> "LiquidInfrastructureERC20.burnFrom" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.withdrawFromAllManagedNFTs" -> "LiquidInfrastructureERC20.withdrawFromManagedNFTs" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.withdrawFromManagedNFTs" -> "Math.min" [ color = "white" ];
+  "LiquidInfrastructureERC20.withdrawFromManagedNFTs" -> "LiquidInfrastructureERC20.LiquidInfrastructureNFT" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.withdrawFromManagedNFTs" -> "LiquidInfrastructureNFT.getThresholds" [ color = "white" ];
+  "LiquidInfrastructureERC20.withdrawFromManagedNFTs" -> "LiquidInfrastructureNFT.withdrawBalancesTo" [ color = "white" ];
+  "LiquidInfrastructureERC20.addManagedNFT" -> "LiquidInfrastructureERC20.LiquidInfrastructureNFT" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.addManagedNFT" -> "LiquidInfrastructureNFT.ownerOf" [ color = "white" ];
+  "LiquidInfrastructureERC20.addManagedNFT" -> "LiquidInfrastructureNFT.AccountId" [ color = "white" ];
+  "LiquidInfrastructureERC20.releaseManagedNFT" -> "LiquidInfrastructureERC20.LiquidInfrastructureNFT" [ color = "#1bc6a6" ];
+  "LiquidInfrastructureERC20.releaseManagedNFT" -> "LiquidInfrastructureNFT.transferFrom" [ color = "white" ];
+  "LiquidInfrastructureERC20.releaseManagedNFT" -> "LiquidInfrastructureNFT.AccountId" [ color = "white" ];
+
+
+rankdir=LR
+node [shape=plaintext]
+subgraph cluster_01 { 
+label = "Legend";
+key [label=<<table border="0" cellpadding="2" cellspacing="0" cellborder="0">
+  <tr><td align="right" port="i1">Internal Call</td></tr>
+  <tr><td align="right" port="i2">External Call</td></tr>
+  <tr><td align="right" port="i3">Defined Contract</td></tr>
+  <tr><td align="right" port="i4">Undefined Contract</td></tr>
+  </table>>]
+key2 [label=<<table border="0" cellpadding="2" cellspacing="0" cellborder="0">
+  <tr><td port="i1">&nbsp;&nbsp;&nbsp;</td></tr>
+  <tr><td port="i2">&nbsp;&nbsp;&nbsp;</td></tr>
+  <tr><td port="i3" bgcolor="#445773">&nbsp;&nbsp;&nbsp;</td></tr>
+  <tr><td port="i4">
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#e8726d">
+      <tr>
+       <td></td>
+      </tr>
+     </table>
+  </td></tr>
+  </table>>]
+key:i1:e -> key2:i1:w [color="#1bc6a6"]
+key:i2:e -> key2:i2:w [color="white"]
+}
+}
